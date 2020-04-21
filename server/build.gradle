@@ -1,0 +1,20 @@
+plugins {
+    id "org.springframework.boot" version "2.2.6.RELEASE"
+}
+
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+    implementation(project(':common'))
+
+    implementation "org.springframework.boot:spring-boot-starter-webflux"
+    implementation "org.springframework.cloud:spring-cloud-stream-binder-kafka"
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+
+    implementation "io.github.resilience4j:resilience4j-reactor"
+    implementation "io.github.resilience4j:resilience4j-spring-cloud2"
+    implementation "io.github.resilience4j:resilience4j-spring-boot2"
+
+    implementation "io.micrometer:micrometer-registry-influx"
+    implementation "org.apache.commons:commons-lang3"
+}

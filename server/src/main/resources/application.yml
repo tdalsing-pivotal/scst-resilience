@@ -1,0 +1,45 @@
+server:
+  port: 8201
+
+spring:
+  cloud:
+    function:
+      definition: consumer;errorSupplier
+    stream:
+      kafka:
+        default:
+          consumer:
+            autoCommitOffset: false
+      bindings:
+        consumer-in-0:
+          destination: resilience-input
+          contentType: application/json
+          group: server
+        errorSupplier-out-0:
+          destination: resilience-output-error
+          contentType: application/json
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      insert:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        failureRateThreshold: 25
+        waitDurationInOpenState: 10000
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        registerHealthIndicator: true
+
+  retry:
+    instances:
+      insert:
+        retryExceptions:
+          - java.lang.IllegalArgumentException
+
+management:
+  metrics:
+    export:
+      influx:
+        uri: http://localhost:8086
+        db: metrics
+        step: 10s

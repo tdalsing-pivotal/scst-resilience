@@ -1,0 +1,10 @@
+server:
+  port: 8202
+
+spring:
+  cloud:
+    stream:
+      bindings:
+        supplier-out-0:
+          destination: resilience-input
+          contentType: application/json
