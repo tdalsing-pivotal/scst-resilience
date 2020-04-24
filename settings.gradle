@@ -1,4 +1,4 @@
-rootProject.name = 'resilience-test'
+rootProject.name = 'scst-resilience'
 
 include 'common'
 include 'server'
