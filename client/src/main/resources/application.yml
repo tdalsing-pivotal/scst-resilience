@@ -8,3 +8,5 @@ spring:
         supplier-out-0:
           destination: resilience-input
           contentType: application/json
+
+logging.level.org.springframework.cloud.function.context.catalog: OFF

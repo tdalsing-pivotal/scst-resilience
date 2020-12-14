@@ -5,21 +5,20 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.EmitterProcessor;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxProcessor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 import static lombok.AccessLevel.PRIVATE;
 
@@ -29,7 +28,7 @@ import static lombok.AccessLevel.PRIVATE;
 @FieldDefaults(level = PRIVATE, makeFinal = true)
 public class ClientApp {
 
-    FluxProcessor<MyObject, MyObject> flux;
+    StreamBridge bridge;
 
     AtomicBoolean running = new AtomicBoolean(false);
     AtomicInteger count = new AtomicInteger(0);
@@ -81,24 +80,12 @@ public class ClientApp {
         return buffer.toString();
     }
 
-    public ClientApp(FluxProcessor<MyObject, MyObject> flux) {
-        this.flux = flux;
+    public ClientApp(StreamBridge bridge) {
+        this.bridge = bridge;
     }
 
     public static void main(String[] args) {
         SpringApplication.run(ClientApp.class, args);
-    }
-
-    @Bean
-    public static FluxProcessor<MyObject, MyObject> flux() {
-        log.info("flux");
-        return EmitterProcessor.create(1);
-    }
-
-    @Bean
-    public Supplier<Flux<MyObject>> supplier() {
-        log.info("supplier");
-        return () -> flux;
     }
 
     @GetMapping("/start")
@@ -112,7 +99,7 @@ public class ClientApp {
                 try {
                     while (running.get()) {
                         MyObject map = generate();
-                        flux.onNext(map);
+                        bridge.send("supplier-out-0", map);
 
                         int c = count.incrementAndGet();
 

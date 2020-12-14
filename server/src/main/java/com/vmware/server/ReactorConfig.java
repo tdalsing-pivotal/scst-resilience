@@ -14,20 +14,16 @@ import io.vavr.control.Try;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.reactivestreams.Subscriber;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.kafka.support.Acknowledgment;
-import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
-import reactor.core.publisher.EmitterProcessor;
 
-import java.time.Duration;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -36,6 +32,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static lombok.AccessLevel.PRIVATE;
+import static org.springframework.kafka.support.KafkaHeaders.ACKNOWLEDGMENT;
 
 @Configuration
 @EnableScheduling
@@ -43,6 +40,8 @@ import static lombok.AccessLevel.PRIVATE;
 @Slf4j
 @FieldDefaults(level = PRIVATE, makeFinal = true)
 public class ReactorConfig {
+
+    StreamBridge bridge;
 
     Counter counter;
     Counter insertErrorCounter;
@@ -54,10 +53,11 @@ public class ReactorConfig {
     Set<String> messageIds = new HashSet<>();
 
     public ReactorConfig(
-            Counter counter,
+            StreamBridge bridge, Counter counter,
             Counter insertErrorCounter,
             Counter duplicateCounter,
             ValidationService<MyObject> validationService) {
+        this.bridge = bridge;
         this.counter = counter;
         this.insertErrorCounter = insertErrorCounter;
         this.duplicateCounter = duplicateCounter;
@@ -119,54 +119,47 @@ public class ReactorConfig {
     }
 
     @Bean
-    public Subscriber<Message<MyObject>> subscriber(CircuitBreaker insertCircuitBreaker, Retry retry) {
-        log.info("subscriber");
-        EmitterProcessor<Message<MyObject>> subscriber = EmitterProcessor.create();
+    public Consumer<Message<MyObject>> consumer(CircuitBreaker insertCircuitBreaker, Retry retry) {
+        log.info("consumer");
 
-        Function<List<Message<MyObject>>, List<Message<MyObject>>> insertFunction = messages -> {
-            log.debug("insertFunction: messages={}", messages);
+        Function<Message<MyObject>, Message<MyObject>> insertFunction = message -> {
+            log.debug("insertFunction: message={}", message);
             boolean fail = failInsert.get();
 
             if (fail) {
                 log.debug("insertFunction: failed insert");
-                insertErrorCounter.increment(messages.size());
+                insertErrorCounter.increment();
                 throw new IllegalArgumentException("failed insert");
             } else {
-                counter.increment(messages.size());
-                ack(messages);
+                counter.increment();
+                ack(message);
 
-                messages.forEach(message -> {
-                    String id = message.getHeaders().getId().toString();
-                    if (!messageIds.add(id)) {
-                        log.warn("insertFunction: duplicate message: id={}", id);
-                        duplicateCounter.increment();
-                    }
-                });
+                String id = message.getHeaders().getId().toString();
+                if (!messageIds.add(id)) {
+                    log.warn("insertFunction: duplicate message: id={}", id);
+                    duplicateCounter.increment();
+                }
 
-                return messages;
+                return message;
             }
         };
 
-        Function<List<Message<MyObject>>, List<Message<MyObject>>> decoratedRetryFunction = Retry.decorateFunction(retry, insertFunction);
-        Function<List<Message<MyObject>>, List<Message<MyObject>>> decoratedCircuitBreakerFunction = CircuitBreaker.decorateFunction(insertCircuitBreaker, decoratedRetryFunction);
-        Consumer<List<Message<MyObject>>> decoratedConsumer = messages ->
+        Function<Message<MyObject>, Message<MyObject>> decoratedRetryFunction = Retry.decorateFunction(retry, insertFunction);
+        Function<Message<MyObject>, Message<MyObject>> decoratedCircuitBreakerFunction =
+                CircuitBreaker.decorateFunction(insertCircuitBreaker, decoratedRetryFunction);
+
+        return message ->
                 Try
-                        .ofSupplier(() -> decoratedCircuitBreakerFunction.apply(messages))
+                        .ofSupplier(() -> decoratedCircuitBreakerFunction.apply(message))
                         .recover(error -> {
                             log.error("decoratedConsumer: error={}", error.toString());
+                            bridge.send("errorSupplier-out-0", message);
                             return null;
                         });
-
-        subscriber
-                .filter(validationService::validate)
-                .bufferTimeout(1000, Duration.ofSeconds(10))
-                .subscribe(decoratedConsumer);
-
-        return subscriber;
     }
 
-    private void ack(List<Message<MyObject>> messages) {
+    private void ack(Message<MyObject> message) {
         log.debug("ack");
-        messages.stream().map(message -> message.getHeaders().get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment.class)).forEach(Acknowledgment::acknowledge);
+        message.getHeaders().get(ACKNOWLEDGMENT, Acknowledgment.class).acknowledge();
     }
 }
