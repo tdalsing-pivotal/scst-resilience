@@ -44,4 +44,4 @@ management:
         db: metrics
         step: 10s
 
-logging.level.org.springframework.cloud.function.context.catalog: OFF
+logging.level.org.springframework.cloud.function.context.catalog: WARN

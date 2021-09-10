@@ -1,4 +1,4 @@
-package com.vmware.server;
+package com.vmware.consumer;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;

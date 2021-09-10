@@ -1,7 +1,6 @@
-package com.vmware.server;
+package com.vmware.consumer;
 
 import com.vmware.common.MyObject;
-import com.vmware.common.ValidationService;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
@@ -17,7 +16,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.messaging.Message;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -36,7 +34,6 @@ import static org.springframework.kafka.support.KafkaHeaders.ACKNOWLEDGMENT;
 
 @Configuration
 @EnableScheduling
-@Import(ValidationService.class)
 @Slf4j
 @FieldDefaults(level = PRIVATE, makeFinal = true)
 public class ReactorConfig {
@@ -46,7 +43,6 @@ public class ReactorConfig {
     Counter counter;
     Counter insertErrorCounter;
     Counter duplicateCounter;
-    ValidationService<MyObject> validationService;
 
     AtomicBoolean failInsert = new AtomicBoolean(false);
     Executor failInsertTimer = Executors.newSingleThreadExecutor();
@@ -55,13 +51,11 @@ public class ReactorConfig {
     public ReactorConfig(
             StreamBridge bridge, Counter counter,
             Counter insertErrorCounter,
-            Counter duplicateCounter,
-            ValidationService<MyObject> validationService) {
+            Counter duplicateCounter) {
         this.bridge = bridge;
         this.counter = counter;
         this.insertErrorCounter = insertErrorCounter;
         this.duplicateCounter = duplicateCounter;
-        this.validationService = validationService;
     }
 
     @Scheduled(initialDelay = 30000L, fixedDelay = 60000L)

@@ -1,4 +1,4 @@
-package com.vmware.client;
+package com.vmware.producer;
 
 import com.vmware.common.MyObject;
 import lombok.experimental.FieldDefaults;
@@ -26,7 +26,7 @@ import static lombok.AccessLevel.PRIVATE;
 @RestController
 @Slf4j
 @FieldDefaults(level = PRIVATE, makeFinal = true)
-public class ClientApp {
+public class ProducerApp {
 
     StreamBridge bridge;
 
@@ -80,12 +80,12 @@ public class ClientApp {
         return buffer.toString();
     }
 
-    public ClientApp(StreamBridge bridge) {
+    public ProducerApp(StreamBridge bridge) {
         this.bridge = bridge;
     }
 
     public static void main(String[] args) {
-        SpringApplication.run(ClientApp.class, args);
+        SpringApplication.run(ProducerApp.class, args);
     }
 
     @GetMapping("/start")

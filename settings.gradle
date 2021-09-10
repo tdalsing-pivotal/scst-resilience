@@ -1,5 +1,5 @@
 rootProject.name = 'scst-resilience'
 
 include 'common'
-include 'server'
-include 'client'
+include 'consumer'
+include 'producer'
