@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.stream.function.StreamBridge;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,6 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static lombok.AccessLevel.PRIVATE;
+import static org.springframework.http.HttpStatus.ACCEPTED;
 
 @SpringBootApplication
 @RestController
@@ -89,7 +89,7 @@ public class ProducerApp {
     }
 
     @GetMapping("/start")
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(ACCEPTED)
     public synchronized void start() {
         log.info("start");
         if (!running.get()) {
@@ -134,7 +134,7 @@ public class ProducerApp {
     }
 
     @GetMapping("/stop")
-    @ResponseStatus(HttpStatus.ACCEPTED)
+    @ResponseStatus(ACCEPTED)
     public synchronized void stop() {
         log.info("stop");
         running.set(false);

@@ -15,6 +15,6 @@ dependencies {
     implementation "io.github.resilience4j:resilience4j-spring-cloud2"
     implementation "io.github.resilience4j:resilience4j-spring-boot2"
 
-    implementation "io.micrometer:micrometer-registry-influx"
+    implementation "io.micrometer:micrometer-registry-graphite"
     implementation "org.apache.commons:commons-lang3"
 }

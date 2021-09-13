@@ -38,10 +38,13 @@ resilience4j:
 
 management:
   metrics:
+    enable:
+      all: true
     export:
-      influx:
-        uri: http://localhost:8086
-        db: metrics
+      graphite:
+        enabled: true
+        host: localhost
         step: 10s
+        graphite-tags-enabled: false
 
 logging.level.org.springframework.cloud.function.context.catalog: WARN

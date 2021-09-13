@@ -9,4 +9,15 @@ spring:
           destination: resilience-input
           contentType: application/json
 
+management:
+  metrics:
+    enable:
+      all: true
+    export:
+      graphite:
+        enabled: true
+        host: localhost
+        step: 10s
+        graphite-tags-enabled: false
+
 logging.level.org.springframework.cloud.function.context.catalog: WARN
