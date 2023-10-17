@@ -40,11 +40,13 @@ management:
   metrics:
     enable:
       all: true
-    export:
-      graphite:
+  influx:
+    metrics:
+      export:
         enabled: true
-        host: localhost
         step: 10s
-        graphite-tags-enabled: false
+        bucket: scst
+        token: A4XPNzOdvdbJQudj0th08N-aNH65vdfzLlFS4YlNy9leoUPLzuKUmD7hoNKdieejs9CHd0eFWsM_9IDAmI9GWQ==
+        org: vmware
 
 logging.level.org.springframework.cloud.function.context.catalog: WARN
